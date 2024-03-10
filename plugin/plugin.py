@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-#HetWeer6.0
+# HetWeer6.0
 import os
-import re 
+import re
 import time
 import json
 import math
@@ -10,14 +10,15 @@ import gettext
 import datetime, time
 import socket
 socket.setdefaulttimeout(10)
-import urllib2, urllib
+# import urllib2, urllib
+# from urllib import urlretrieve
+
 from Screens.Console import Console
 from Components.Language import language
 from Plugins.Plugin import PluginDescriptor
 from Screens.Screen import Screen
 from Components.MenuList import MenuList
 from Screens.VirtualKeyBoard import VirtualKeyBoard
-from urllib import urlretrieve
 from Components.Label import Label
 from Components.ScrollLabel import ScrollLabel
 from Components.ActionMap import ActionMap, HelpableActionMap
@@ -33,23 +34,45 @@ from Screens.HelpMenu import HelpableScreen
 from Components.FileList import FileList
 from time import gmtime, strftime, localtime
 
- 
+try:
+    from urllib.parse import urlparse, unquote
+    from urllib.request import urlretrieve, urlopen
+    from urllib.request import Request
+    from urllib.error import URLError
+    from urllib.error import HTTPError
+    PY3 = True
+    unicode = str
+    unichr = chr
+    long = int
+except ImportError:
+    from urlparse import urlparse
+    from urllib import urlretrieve
+    from urllib2 import Request
+    from urllib import unquote
+    from urllib2 import urlopen
+    from urllib2 import URLError
+    from urllib2 import HTTPError
+
+
 PluginLanguageDomain = "FileBrowser"
 PluginLanguagePath = "Extensions/HetWeer/locale/"
-
 lang = language.getLanguage()
 os.environ["LANGUAGE"] = lang[:2]
 gettext.bindtextdomain("enigma2", resolveFilename(SCOPE_LANGUAGE))
 gettext.textdomain("enigma2")
 gettext.bindtextdomain("HetWeer", "%s%s" % (resolveFilename(SCOPE_PLUGINS), "Extensions/HetWeer/locale/"))
 
+
 def _(txt):
-	t = gettext.dgettext("HetWeer", txt)
-	if t == txt:
-		t = gettext.gettext(txt)
-	return t
+    t = gettext.dgettext("HetWeer", txt)
+    if t == txt:
+        t = gettext.gettext(txt)
+    return t
+
 
 versienummer = ''
+
+
 if os.path.exists('/var/lib/opkg/info/enigma2-plugin-extensions-hetweer.control'):
     with open('/var/lib/opkg/info/enigma2-plugin-extensions-hetweer.control') as origin:
         for versie in origin:
@@ -60,7 +83,10 @@ if os.path.exists('/var/lib/opkg/info/enigma2-plugin-extensions-hetweer.control'
             except IndexError:
                 print
 
-#WeerInfoCurVer = 6.0
+
+# WeerInfoCurVer = 6.0
+
+
 def transhtml(text):
     text = text.replace('&nbsp;', ' ').replace('&szlig;', 'ss').replace('&quot;', '"').replace('&ndash;', '-').replace('&Oslash;', '').replace('&bdquo;', '"').replace('&ldquo;', '"').replace('&rsquo;', "'").replace('&gt;', '>').replace('&lt;', '<').replace('&shy;', '')
     text = text.replace('&copy;.*', ' ').replace('&amp;', '&').replace('&uuml;', '\xc3\xbc').replace('&auml;', '\xc3\xa4').replace('&ouml;', '\xc3\xb6').replace('&eacute;', 'e').replace('&hellip;', '...').replace('&egrave;', '\xe8').replace('&agrave;', '\xe0').replace('&mdash;', '-')
@@ -68,6 +94,7 @@ def transhtml(text):
     text = text.replace('&#8211;', '-').replace('&#8212;', '\x97').replace('&#8216;', "'").replace('&#8217;', "'").replace('&#8220;', '"').replace('&#8221;', '"').replace('&#8230;', '...').replace('&#8242;', "'").replace('&#8243;', '"')
     text = text.replace('<u>', '').replace('</u>', '').replace('<b>', '').replace('</b>', '').replace('&deg;', '\xb0').replace('&ordm;', '\xb0').replace('&euml;', 'e').replace('<em>', '').replace('</em>', '').replace('&aacute;', 'a').replace('&oacute;', 'o')
     return text
+
 
 def icontotext(icon):
     text = ""
@@ -139,6 +166,7 @@ def icontotext(icon):
         text = _("No info")
     return text
 
+
 def winddirtext(dirtext):
     text = ""
     if dirtext == "N":
@@ -159,6 +187,7 @@ def winddirtext(dirtext):
         text = _("NW")
     return text
 
+
 def get_image_info(pic):
     data = None
     with open(pic, "rb") as f:
@@ -171,53 +200,52 @@ def get_image_info(pic):
         return 0
     return width, height
 
+
 def is_png(data):
     return (data[:8] == "\211PNG\r\n\032\n"and (data[12:16] == "IHDR"))
 
+
 def checkInternet():
     try:
-        response = urllib2.urlopen("http://google.com", None, 5)
+        response = urlopen("http://google.com", None, 5)
         response.close()
-    except urllib2.HTTPError:
+    except HTTPError:
         return False
-    except urllib2.URLError:
+    except URLError:
         return False
     except socket.timeout:
         return False
     else:
         return True
 
+
 def getScale():
     return AVSwitch().getFramebufferScale()
 
+global weatherData
 sz_w = getDesktop(0).size().width()
 state = ["","","","","","",""]
-
 SavedLokaleWeer = []
-
 weatherData = ["ohka"]
 lockaaleStad = ""
 selectedWeerDay = 0
-
-
 citynamedisplay = ""
 
 
 def getLocWeer(iscity = None):
     inputCity = iscity
-    global lockaaleStad, citynamedisplay
+    global lockaaleStad, citynamedisplay, weatherData
     mydata = []
-    
+
     lockaaleStad = inputCity
     mydata = inputCity
-    match = None 
-    try: 
+    match = None
+    try:
         print(mydata)
         citynumb = int(mydata.split("-")[1])
         print(citynumb)
-        response = urllib.urlopen("http://api.buienradar.nl/data/forecast/1.1/all/"+ str(citynumb))
+        response = urlopen("http://api.buienradar.nl/data/forecast/1.1/all/"+ str(citynumb))
         antw = response.read()
-        global weatherData
         weatherData = json.loads(antw)
         citynamedisplay = str(mydata.split("-")[0])
         return True
@@ -231,9 +259,9 @@ def getLocWeer(iscity = None):
                 countycodenewy = snewy[1]
             text = mydata.replace(' ', '%20')
             print("cityname lookup", citynamenewy)
-            response = urllib.urlopen("https://location.buienradar.nl/1.1/location/search?query="+citynamenewy)
+            response = urlopen("https://location.buienradar.nl/1.1/location/search?query="+citynamenewy)
             antw = response.read()
-            staddata = json.loads(antw)   
+            staddata = json.loads(antw)
             entryselect = 0
             entrselect =0
             if citynamenewy:
@@ -244,23 +272,20 @@ def getLocWeer(iscity = None):
                         break
                     entrselect += 1
             print("cipt id find", staddata[entryselect]["id"])
-            response = urllib.urlopen("https://forecast.buienradar.nl/2.0/forecast/"+str(staddata[entryselect]["id"]))
+            response = urlopen("https://forecast.buienradar.nl/2.0/forecast/"+str(staddata[entryselect]["id"]))
             antw = response.read()
-            global weatherData
             weatherData = json.loads(antw)
-            
-            
             citynamedisplay = staddata[entryselect]["name"]+"  "+staddata[entryselect]["countrycode"]
-            
+
             return True
-        except Exception,e:
+        except Exception as e:
             print(e)
             return False
 
 
 def weatherchat(country):
-    req = urllib2.Request("http://www.buienradar."+country+"/weerbericht")
-    response = urllib2.urlopen(req)
+    req = Request("http://www.buienradar."+country+"/weerbericht")
+    response = urlopen(req)
     antw = response.read()
     antw = antw.replace("\t", "").replace("\r", "").replace("\n", "").replace("<strong>", "")
     antw = antw.replace("<br />", "").replace("</strong>", "").replace("</a>", "")
@@ -268,6 +293,7 @@ def weatherchat(country):
     regx = '''<div id="readarea" class="description">(.*?)</div>'''
     match = re.findall(regx, antw, re.DOTALL)
     return match[0]
+
 
 class startScreen(Screen):
     sz_w = getDesktop(0).size().width()
@@ -316,12 +342,13 @@ class startScreen(Screen):
         </screen>"""
 
     titleNames = [_("Local Weather"), _("The Netherlands"), _("Belgium"), _("Europe")]
+
     def __init__(self, session):
         self.session = session
         self["mess1"] = ScrollLabel("")
         self["key_red"] = Label(_("Exit"))
         self["key_green"] = Label("OK")
-        #self["key_yellow"] = Label("Update Check")
+        # self["key_yellow"] = Label("Update Check")
         self.skin = startScreen.skin
         Screen.__init__(self, session)
         list = []
@@ -347,7 +374,7 @@ class startScreen(Screen):
         self.close()
 
     def checkupg(self):
-        response = urllib2.urlopen("http://users.telenet.be/caught/version_hetweer.txt")
+        response = urlopen("http://users.telenet.be/caught/version_hetweer.txt")
         curver = float(response.read())
 
         if WeerInfoCurVer < curver:
@@ -356,19 +383,21 @@ class startScreen(Screen):
             self.pausetimer.callback.append(self.htwUpdateMain)
             self.pausetimer.start(500, True)
         else:
-            self.session.open(MessageBox, "Momenteel geen update beschikbaar", MessageBox.TYPE_INFO)    
-    
+            self.session.open(MessageBox, "Momenteel geen update beschikbaar", MessageBox.TYPE_INFO)
+
     def htwUpdateMain(self):
         self.session.openWithCallback(self.htwinfoUpdate, MessageBox,
                                       "Update beschikbaar, wil je de update toepassen?")
+
     def htwinfoUpdate(self, htwmupg):
         if htwmupg is True:
             self["mess1"].setText("Package will be Updated")
             try:
-                self.session.open(Console, "downloading-installing: HetWeer", ["echo Please wait while Downloading and Installing!!;opkg install -force-overwrite http://users.telenet.be/caught/HetWeer/enigma2-plugin-extensions-hetweer_all.ipk;"]) 
-                       
+                self.session.open(Console, "downloading-installing: HetWeer", ["echo Please wait while Downloading and Installing!!;opkg install -force-overwrite http://users.telenet.be/caught/HetWeer/enigma2-plugin-extensions-hetweer_all.ipk;"])
+
             except (IOError, RuntimeError, NameError):
                 self["mess1"].setText("Package was NOT Updated")
+
 
 class weeroverview(Screen):
     def __init__(self, session):
@@ -392,8 +421,8 @@ class weeroverview(Screen):
             peocpic = "temphot.png"
         else:
             peocpic = "tempeven.png"
-        print "GE0-------->"+str(protemp[0])
-        print "GE1-------->"+str(protemp[1])
+        print("GE0-------->"+str(protemp[0]))
+        print("GE1-------->"+str(protemp[1]))
         peocpichd = """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/windhd/%s" position="1112,143" size="90,80" zPosition="2" transparent="0" alphatest="blend"/>""" % (peocpic)
         peocpicsd = """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/wind/%s" position="752,99" size="60,53" zPosition="2" transparent="0" alphatest="blend"/>""" % (peocpic)
         if sz_w > 1800:
@@ -422,14 +451,14 @@ class weeroverview(Screen):
                 if tempdiff > 0:
                     lineheight = tempdiff*31
                 yposline = (1200-(curtemp*31))-lineheight
-                #dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/""" + str(tempdiff) + """.png" position=\"""" + str(130 + (99 * day)) + ""","""+str(yposline)+"""\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>"""
+                # dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/""" + str(tempdiff) + """.png" position=\"""" + str(130 + (99 * day)) + ""","""+str(yposline)+"""\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>"""
                 curtemp = int(dagenbefore["mintemperature"])
                 tempdiff = (int(dataDagen[day+1]["mintemperature"])-curtemp)
                 lineheight = 0
                 if tempdiff > 0:
                     lineheight = tempdiff*31
                 yposline = (1200-(curtemp*31))-lineheight
-                #dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/b""" + str(tempdiff) + """.png" position=\"""" + str(130 + (99 * day)) + ""","""+str(yposline)+"""\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>"""
+                # dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/b""" + str(tempdiff) + """.png" position=\"""" + str(130 + (99 * day)) + ""","""+str(yposline)+"""\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>"""
                 dayinfoblok += """
                     <widget name="bigWeerIcon1""" + str(day) + """" position="636,102" size="150,150" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/iconbighd/""" + str(dataUrr) + """.png" zPosition="1" alphatest="on"/>
                     <widget name="bigDirIcon1""" + str(day) + """" position="1170,343" size="42,42" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/windhd/""" + str(windkracht) + """.png" zPosition="1" alphatest="on"/>
@@ -441,7 +470,7 @@ class weeroverview(Screen):
                     <widget name="sunriselab" position="625,362" size="200,40" zPosition="3" font="Regular;28" transparent="1" borderColor="black" borderWidth="1"/>
                     <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/iconhd/sunupdownhd.png" zPosition="3" position="650,295" size="120,60" alphatest="blend"/>"""
                 dataUrr = dataDagen[day]["hours"]
-                #create hourly weatherIcon
+                # create hourly weatherIcon
                 if day == 0:
                     for data in dataUrr:
                         blocks = len(dataUrr)
@@ -449,13 +478,13 @@ class weeroverview(Screen):
                             blocks = 8
                         if data.get("hour") and ((data["hour"]-1)%math.ceil(blocks/8)) == 0:
                             dayinfoblok += """<widget name="dayIcon""" + str(day)+""+str(uurcount)+ """" position=\"""" + str(120 + (216 * uurcount)) + """,749" size="72,72" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/iconhd/"""+data["iconcode"]+""".png" zPosition="1" alphatest="on"/>"""
-                            print "maak : "+ str(day)+"|"+str(uurcount)
+                            print("maak : "+ str(day)+"|"+str(uurcount))
                             uurcount += 1
                 else:
                     for data in dataUrr:
                         if data.get("hour") and (data["hour"]-1)%3 == 0:
                             dayinfoblok += """<widget name="dayIcon""" + str(day)+""+str(uurcount)+ """" position=\"""" + str(120 + (216 * uurcount)) + """,749" size="72,72" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/iconhd/"""+data["iconcode"]+""".png" zPosition="1" alphatest="on"/>"""
-                            print "maak : "+ str(day)+"|"+str(uurcount)
+                            print("maak : "+ str(day)+"|"+str(uurcount))
                             uurcount += 1
             for uur in range(0, 8):
                 dayinfoblok += """
@@ -469,7 +498,7 @@ class weeroverview(Screen):
                     <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/windhd/rainhd.png" position=\"""" + str(116 + (216 * uur)) + """,921" size="30,30" zPosition="3" alphatest="on"/>
                     <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/windhd/rhhd.png" position=\"""" + str(120 + (216 * uur)) + """,960" size="23,30" zPosition="3" alphatest="on"/>
                     <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/windhd/turbinehd.png" position=\"""" + str(119 + (216 * uur)) + """,997" size="38,38" zPosition="3" alphatest="on"/>"""
-                    
+
             skin = """
                 <screen position="fill" flags="wfNoBorder">
                     <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/backgroundhd.png" position="center,center" size="1920,1080" zPosition="0" alphatest="on"/>
@@ -513,7 +542,7 @@ class weeroverview(Screen):
                     <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/icon/sunupdownsd.png" zPosition="3" position="426,206" size="120,60" alphatest="blend"/>"""
 
                 dataUrr = dataDagen[day]["hours"]
-                #create hourly weatherIcon
+                # create hourly weatherIcon
                 if day == 0:
                     for data in dataUrr:
                         blocks = len(dataUrr)
@@ -521,13 +550,13 @@ class weeroverview(Screen):
                             blocks = 8
                         if data.get("hour") and (data["hour"]-1)%math.ceil(blocks/8) == 0:
                             dayinfoblok += """<widget name="dayIcon""" + str(day)+""+str(uurcount)+ """" position=\"""" + str(80 + (144 * uurcount)) + """,494" size="48,48" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/icon/"""+data["iconcode"]+""".png" zPosition="1" alphatest="on"/>"""
-                            print "maak : "+ str(day)+"|"+str(uurcount)
+                            print("maak : "+ str(day)+"|"+str(uurcount))
                             uurcount += 1
                 else:
                     for data in dataUrr:
                         if data.get("hour") and (data["hour"]-1)%3 == 0:
                             dayinfoblok += """<widget name="dayIcon""" + str(day)+""+str(uurcount)+ """" position=\"""" + str(80 + (144 * uurcount)) + """,494" size="48,48" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/icon/"""+data["iconcode"]+""".png" zPosition="1" alphatest="on"/>"""
-                            print "maak : "+ str(day)+"|"+str(uurcount)
+                            print("maak : "+ str(day)+"|"+str(uurcount))
                             uurcount += 1
             for uur in range(0, 8):
                 dayinfoblok += """
@@ -541,7 +570,7 @@ class weeroverview(Screen):
                     <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/wind/rainsd.png" position=\"""" + str(77 + (144 * uur)) + """,605" size="20,20" zPosition="6" alphatest="on"/>
                     <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/wind/rhsd.png" position=\"""" + str(79 + (144 * uur)) + """,632" size="16,20" zPosition="6" alphatest="on"/>
                     <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/wind/turbine.png" position=\"""" + str(79 + (144 * uur)) + """,656" size="25,25" zPosition="6" alphatest="on"/>"""
-                    
+
             skin = """
                 <screen position="fill" flags="wfNoBorder">
                     <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/background.png" position="center,center" size="1280,720" zPosition="0" alphatest="on"/>
@@ -559,8 +588,7 @@ class weeroverview(Screen):
         Screen.__init__(self, session)
         self.skin = skin
         print(citynamedisplay, lockaaleStad.split("-")[0])
-        
-        
+
         self["city1"] = Label(str(citynamedisplay))
         for day in range(0, 7):
             self["bigWeerIcon1"+str(day)] = Pixmap()
@@ -603,7 +631,7 @@ class weeroverview(Screen):
             if dagen.get("mintemp"):
                 info2 += '{:>3}'.format(str("%.0f" % dagen["mintemp"])+"\xb0")
             elif dagen.get("mintemperature"):
-                info2 += '{:>3}'.format( str("%.0f" % dagen["mintemperature"])+"\xb0")
+                info2 += '{:>3}'.format(str("%.0f" % dagen["mintemperature"])+"\xb0")
             else:
                 info2 += "--.-\xb0C"
             if dagen.get("maxtemp"):
@@ -661,7 +689,7 @@ class weeroverview(Screen):
         try:
             self["bigtemp1"].setText('{:>4}'.format(str("%.1f" % dataPerUur[(0)]["temperature"])))
             self["GevoelsTemp1"].setText(_("Feels Like: ")+str("%.1f" % dataPerUur[(0)]["feeltemperature"])+"\xb0C")
-            self["winddir1"].setText(_("Wind direction: ")+str(winddirtext(dataPerUur[(0)]["winddirection"])))		
+            self["winddir1"].setText(_("Wind direction: ")+str(winddirtext(dataPerUur[(0)]["winddirection"])))
             self["bigweathertype1"].setText(icontotext(str(dataPerUur[(0)]["iconcode"])))
         except:
             0+0
@@ -673,15 +701,14 @@ class weeroverview(Screen):
         if dataDagen[0].get("winddirection"):
             windtext = dataDagen[0]["winddirection"]
 
-
         typetext = "na"
         if dataDagen[0].get("iconcode"):
             typetext = dataDagen[0]["iconcode"]
-                        
+
         dataPerUur = weatherData["days"][self.selected]["hours"]
         self["bigWeerIcon1"+str(0)].show()
         self["bigDirIcon1"+str(0)].show()
-        
+
         for perUurUpdate in range(0,8):
             for day in range(0, 7):
                 self["dayIcon"+str(day)+str(perUurUpdate)].hide()
@@ -691,9 +718,9 @@ class weeroverview(Screen):
             else:
                 jumppoint = 3
             if jumppoint<1:
-                jumppoint=1    
+                jumppoint=1
             try:
-            
+
                 if (perUurUpdate*jumppoint) < len(dataPerUur):
                     self["dayhour3"+str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["hour"])+_("h"))
                     self["daytemp3"+str(perUurUpdate)].setText('{:>4}'.format(str("%.0f" % dataPerUur[(perUurUpdate*jumppoint)]["temperature"])+"\xb0C"))
@@ -701,7 +728,7 @@ class weeroverview(Screen):
                     self["dayspeed3"+str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["windspeed"])+_("Km/h"))
                     self["sunpercent3"+str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["sunshine"])+"%")
                     self["hrdayper3"+str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["humidity"])+"%")
-                
+
                 else:
                     self["dayhour3"+str(perUurUpdate)].setText("")
                     self["daytemp3"+str(perUurUpdate)].setText("")
@@ -722,16 +749,15 @@ class weeroverview(Screen):
                         self["dayhour3"+str(perUurUpdate)].setText("")
                         self["daytemp3"+str(perUurUpdate)].setText("")
                         self["daypercent3"+str(perUurUpdate)].setText("")
-                        self["dayspeed3"+str(perUurUpdate)].setText("")    
+                        self["dayspeed3"+str(perUurUpdate)].setText("")
                         self["sunpercent3"+str(perUurUpdate)].setText("")
                         self["hrdayper3"+str(perUurUpdate)].setText("")
                 except:
-                
                     None
+
     def veertienbut(self):
         self.session.open(veertien)
-                        
-                
+
     def cancel(self):
         self.close(None)
 
@@ -739,9 +765,9 @@ class weeroverview(Screen):
 class veertien(Screen):
     def __init__(self, session):
         sz_w = getDesktop(0).size().width()
+        global weatherData
         if sz_w > 1800:
             dayinfoblok = ""
-            global weatherData
             dataDagen = weatherData["days"]
             maxheightshift = 2000
             for day in range(0, len(dataDagen)):
@@ -776,7 +802,7 @@ class veertien(Screen):
                 if day < 13:
                     dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/""" + str(tempdiff) + """.png" position=\"""" + str((130 + (118 * day))+59) + ""","""+str(yposline)+"""\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>
                     <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/bar.png" position=\"""" + str((130 + (118 * day))+120) + """,140" size="10,900" zPosition="10" transparent="0" alphatest="blend"/>
-                
+
                     """
                 dayinfoblok += """<widget name="linetempmax""" + str(day) + """" position=\"""" + str(((130 + (118 * day))-18)+59) + ""","""+str(((yposline-45)+lineheight))+"""\" size="90,54" zPosition="15" font="Regular;30" transparent="1" borderColor="black" borderWidth="1"/>
                 <widget name="bigWeerIcon1""" + str(day) + """" position=\"""" + str((130 + (118 * day))+28) + """,267" size="150,150" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/iconhd/""" + str(dagenbefore["iconcode"]) + """.png" zPosition="1" alphatest="on"/>
@@ -809,7 +835,7 @@ class veertien(Screen):
                 self["linetempmin"+str(day)] = Label(str(curtemp))
                 self["bigWeerIcon1"+str(day)] = Pixmap()
                 self["wind"+str(day)] = Pixmap()
-            
+
                 mydate = dagenbefore["date"][:-9]
                 unixtimecode = time.mktime(datetime.datetime(int(mydate[:4]), int(mydate[5:][:2]), int(mydate[8:][:2])).timetuple())
                 unixtimecode = unixtimecode
@@ -817,7 +843,7 @@ class veertien(Screen):
                 info2 = str(strftime("%d-%m", localtime(unixtimecode)))
                 self["dagvandeweek"+str(day)] = Label(str(info1).upper())
                 self["datumvandeweek"+str(day)] = Label(str(info2))
-            self["city1"] = Label(str(citynamedisplay))    
+            self["city1"] = Label(str(citynamedisplay))
             skin = """
                 <screen position="fill" flags="wfNoBorder">
                     <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/bgbluhd.png" position="center,center" size="1920,1080" zPosition="0" alphatest="on"/>
@@ -832,7 +858,6 @@ class veertien(Screen):
                 </screen>"""
         else:
             dayinfoblok = ""
-            global weatherData
             dataDagen = weatherData["days"]
             maxheightshift = 2000
             for day in range(0, len(dataDagen)):
@@ -867,7 +892,7 @@ class veertien(Screen):
                 if day < len(dataDagen)-1:
                     dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/linessd/""" + str(tempdiff) + """.png" position=\"""" + str((87 + (79 * day))+40) + ""","""+str(yposline)+"""\" size="134,134" zPosition="10" transparent="0" alphatest="blend"/>
                     <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/linessd/bar.png" position=\"""" + str((87 + (79 * day))+80) + """,94" size="3,650" zPosition="10" transparent="0" alphatest="blend"/>
-                
+
                     """
                 dayinfoblok += """<widget name="linetempmax""" + str(day) + """" position=\"""" + str(((87 + (79 * day))-12)+40) + ""","""+str(((yposline-30)+lineheight))+"""\" size="60,36" zPosition="15" font="Regular;20" transparent="1" borderColor="black" borderWidth="1"/>
                 <widget name="bigWeerIcon1""" + str(day) + """" position=\"""" + str((87 + (79 * day))+19) + """,178" size="100,100" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/icon/""" + str(dagenbefore["iconcode"]) + """.png" zPosition="1" alphatest="on"/>
@@ -900,7 +925,7 @@ class veertien(Screen):
                 self["linetempmin"+str(day)] = Label(str(curtemp))
                 self["bigWeerIcon1"+str(day)] = Pixmap()
                 self["wind"+str(day)] = Pixmap()
-            
+
                 mydate = dagenbefore["date"][:-9]
                 unixtimecode = time.mktime(datetime.datetime(int(mydate[:4]), int(mydate[5:][:2]), int(mydate[8:][:2])).timetuple())
                 unixtimecode = unixtimecode
@@ -908,7 +933,7 @@ class veertien(Screen):
                 info2 = str(strftime("%d-%m", localtime(unixtimecode)))
                 self["dagvandeweek"+str(day)] = Label(str(info1).upper())
                 self["datumvandeweek"+str(day)] = Label(str(info2))
-            self["city1"] = Label(str(citynamedisplay))    
+            self["city1"] = Label(str(citynamedisplay))
             skin = """
                 <screen position="fill" flags="wfNoBorder">
                     <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/bgblusd.png" position="0,0" size="1280,780" zPosition="0" alphatest="on"/>
@@ -925,8 +950,10 @@ class veertien(Screen):
         Screen.__init__(self, session)
         self.skin = skin
         self["myActionMap"] = ActionMap(["SetupActions"], {"cancel": self.cancel}, -1)
+
     def cancel(self):
         self.close(None)
+
 
 class weatherMenuSub(Screen):
     sz_w = getDesktop(0).size().width()
@@ -965,24 +992,25 @@ class weatherMenuSub(Screen):
             <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/buttons/red26.png" position="145,643" size="26,26" alphatest="on"/>
             <widget name="key_red" position="185,643" size="220,28" zPosition="1" transparent="1" font="Regular;24" borderColor="black" borderWidth="1" halign="left"/>
         </screen>"""
-          
+
     listNamesnl = [_("Rainfall radar"), _("Temperature"), _("Drizzle"), _("Thunder radar"), _("Clouds radar"), _("Mist radar"), _("Snow radar"), _("Sun radar"), _("Sunpower-UV"), _("Satellite"), _("Weather forecast-nl")]
     listNamesbe = [_("Rainfall radar"), _("Drizzle"), _("Thunder radar"), _("Clouds radar"), _("Hail radar"), _("Snow radar"), _("Sun radar"), _("Satellite"), _("Weather forecast-nl")]
     listNameseu = [_("Rainfall radar"), _("Thunder radar"), _("Satellite"), _("Weather forecast-nl")]
+
     def __init__(self, session):
         self.session = session
         self["key_red"] = Label(_("Exit"))
         self.skin = weatherMenuSub.skin
         Screen.__init__(self, session)
         list = []
-        self.countries = None 
-        if state[0] == _("Belgium"): 
+        self.countries = None
+        if state[0] == _("Belgium"):
             self.countries = weatherMenuSub.listNamesbe
         elif state[0] == _("The Netherlands"):
             self.countries = weatherMenuSub.listNamesnl
         elif state[0] == _("Europe"):
-            self.countries = weatherMenuSub.listNameseu    
-        
+            self.countries = weatherMenuSub.listNameseu
+
         for x in self.countries:
             list.append((x))
         self["list"] = MenuList(list)
@@ -1004,7 +1032,7 @@ class weatherMenuSub(Screen):
         locurl = ""
         picturedownloadurl = ""
         loctype = ""
-        
+
         def openScreenRadar():
             if not type == _("Weather forecast"):
                 distro = 'unknown'
@@ -1016,44 +1044,44 @@ class weatherMenuSub(Screen):
                 except:
                     pass
 
-                if distro == 'openatv'or distro == 'hdfreaks'or distro == 'openhdf':  
+                if distro == 'openatv'or distro == 'hdfreaks'or distro == 'openhdf':
                     self.session.open(radarScreenoatv)
                 else:
                     self.session.open(radarScreenop)
-                    
+
         global typename
         global wchat
         global legend
         typename = type
-        legend = True 
+        legend = True
         try:
             if state[0] == _("Belgium") and newView:
                 if type == _("Weather forecast-nl"):
                     wchat = weatherchat("be/Belgie/weerbericht")
                     self.session.open(weathertalk)
                 elif type == _("Temperature"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/weathermapnl/?ext=png&l=2&hist=12&forc=1&step=0&type=temperatuur&w=550&h=512', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/weathermapnl/?ext=png&l=2&hist=12&forc=1&step=0&type=temperatuur&w=550&h=512', '/tmp/HetWeer/00.png')
                     legend = False
                 elif type == _("Rainfall radar"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/radarmapbe/?ext=png&l=2&hist=0&forc=20&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/radarmapbe/?ext=png&l=2&hist=0&forc=20&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
                 elif type == _("Drizzle"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/drizzlemapnl/?ext=png&l=2&hist=30&forc=0&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/drizzlemapnl/?ext=png&l=2&hist=30&forc=0&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
                 elif type == _("Clouds radar"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/cloudmapnl/?ext=png&l=2&hist=30&forc=0&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/cloudmapnl/?ext=png&l=2&hist=30&forc=0&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
                 elif type == _("Sun radar"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/sunmapnl/?ext=png&l=2&hist=0&forc=30&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/sunmapnl/?ext=png&l=2&hist=0&forc=30&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
                     legend = False
                 elif type == _("Thunder radar"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/lightningnl/?ext=png&l=2&hist=30&forc=0&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/lightningnl/?ext=png&l=2&hist=30&forc=0&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
                 elif type == _("Hail radar"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/hailnl/?ext=png&l=2&hist=10&forc=1&step=0&w=550&h=512', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/hailnl/?ext=png&l=2&hist=10&forc=1&step=0&w=550&h=512', '/tmp/HetWeer/00.png')
                 elif type == _("Snow radar"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/snowmapnl/?ext=png&l=2&hist=100&forc=1&step=0&w=550&h=512', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/snowmapnl/?ext=png&l=2&hist=100&forc=1&step=0&w=550&h=512', '/tmp/HetWeer/00.png')
                 elif type == _("Satellite"):
-                    urllib.urlretrieve('https://image.buienradar.nl/2.0/image/sprite/SatCombined?height=512&width=550&history=8&skip=0', '/tmp/HetWeer/00.png')
+                    urlretrieve('https://image.buienradar.nl/2.0/image/sprite/SatCombined?height=512&width=550&history=8&skip=0', '/tmp/HetWeer/00.png')
                     legend = False
                 elif type == _("Sunpower-UV"):
-                    urllib.urlretrieve('https://image.buienradar.nl/2.0/image/sprite/WeatherMapUVIndexNL?extension=png&l=2&hist=0&forc=10&step=0&width=550&height=512', '/tmp/HetWeer/00.png')
+                    urlretrieve('https://image.buienradar.nl/2.0/image/sprite/WeatherMapUVIndexNL?extension=png&l=2&hist=0&forc=10&step=0&width=550&height=512', '/tmp/HetWeer/00.png')
                     legend = False
                 if not type == _("Weather forecast-nl"):
                     openScreenRadar()
@@ -1063,31 +1091,31 @@ class weatherMenuSub(Screen):
                     wchat = weatherchat("nl/Nederland/weerbericht")
                     self.session.open(weathertalk)
                 elif type == _("Rainfall radar"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/radarmapnl/?ext=png&l=2&hist=0&forc=20&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/radarmapnl/?ext=png&l=2&hist=0&forc=20&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
                 elif type == _("Temperature"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/weathermapnl/?ext=png&l=2&hist=12&forc=1&step=0&type=temperatuur&w=550&h=512', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/weathermapnl/?ext=png&l=2&hist=12&forc=1&step=0&type=temperatuur&w=550&h=512', '/tmp/HetWeer/00.png')
                     legend = False
                 elif type == _("Drizzle"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/drizzlemapnl/?ext=png&l=2&hist=30&forc=0&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/drizzlemapnl/?ext=png&l=2&hist=30&forc=0&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
                 elif type == _("Clouds radar"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/cloudmapnl/?ext=png&l=2&hist=30&forc=0&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/cloudmapnl/?ext=png&l=2&hist=30&forc=0&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
                 elif type == _("Snow radar"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/snowmapnl/?ext=png&l=2&hist=10&forc=1&step=0&w=550&h=512', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/snowmapnl/?ext=png&l=2&hist=10&forc=1&step=0&w=550&h=512', '/tmp/HetWeer/00.png')
                 elif type == _("Mist radar"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/weathermapnl/?type=zicht&ext=png&l=2&hist=2&forc=0&step=0&w=550&h=512', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/weathermapnl/?type=zicht&ext=png&l=2&hist=2&forc=0&step=0&w=550&h=512', '/tmp/HetWeer/00.png')
                     legend = False
                 elif type == _("Sun radar"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/sunmapnl/?ext=png&l=2&hist=0&forc=30&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/sunmapnl/?ext=png&l=2&hist=0&forc=30&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
                     legend = False
                 elif type == _("Thunder radar"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/lightningnl/?ext=png&l=2&hist=30&forc=0&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/lightningnl/?ext=png&l=2&hist=30&forc=0&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
                 elif type == _("Hail radar"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/hailnl/?ext=png&l=2&hist=10&forc=1&step=0&w=550&h=512', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/hailnl/?ext=png&l=2&hist=10&forc=1&step=0&w=550&h=512', '/tmp/HetWeer/00.png')
                 elif type == _("Satellite"):
-                    urllib.urlretrieve('https://image.buienradar.nl/2.0/image/sprite/SatCombined?height=512&width=550&history=8&skip=0', '/tmp/HetWeer/00.png')
+                    urlretrieve('https://image.buienradar.nl/2.0/image/sprite/SatCombined?height=512&width=550&history=8&skip=0', '/tmp/HetWeer/00.png')
                     legend = False
                 elif type == _("Sunpower-UV"):
-                    urllib.urlretrieve('https://image.buienradar.nl/2.0/image/sprite/WeatherMapUVIndexNL?extension=png&l=2&hist=0&forc=10&step=0&width=550&height=512', '/tmp/HetWeer/00.png')
+                    urlretrieve('https://image.buienradar.nl/2.0/image/sprite/WeatherMapUVIndexNL?extension=png&l=2&hist=0&forc=10&step=0&width=550&height=512', '/tmp/HetWeer/00.png')
                     legend = False
                 if not type == _("Weather forecast-nl"):
                     openScreenRadar()
@@ -1097,26 +1125,26 @@ class weatherMenuSub(Screen):
                     wchat = weatherchat("nl/wereldwijd/europa")
                     self.session.open(weathertalk)
                 elif type == _("Rainfall radar"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/radarmapeu/?ext=png&l=2&hist=0&forc=10&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/radarmapeu/?ext=png&l=2&hist=0&forc=10&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
                 elif type == _("Thunder radar"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/radarcloudseu/?ext=png&l=2&hist=8&forc=0&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/radarcloudseu/?ext=png&l=2&hist=8&forc=0&step=0&h=512&w=550', '/tmp/HetWeer/00.png')
                 elif type == _("Satellite"):
-                    urllib.urlretrieve('http://api.buienradar.nl/image/1.0/satvisual2/?ext=png&l=2&hist=10&forc=1&step=0&type=eu&w=550&h=512', '/tmp/HetWeer/00.png')
+                    urlretrieve('http://api.buienradar.nl/image/1.0/satvisual2/?ext=png&l=2&hist=10&forc=1&step=0&type=eu&w=550&h=512', '/tmp/HetWeer/00.png')
                     legend = False
                 elif type == _("Sunpower-UV"):
-                    urllib.urlretrieve('https://image.buienradar.nl/2.0/image/sprite/WeatherMapUVIndexNL?extension=png&l=2&hist=0&forc=10&step=0&width=550&height=512', '/tmp/HetWeer/00.png')
+                    urlretrieve('https://image.buienradar.nl/2.0/image/sprite/WeatherMapUVIndexNL?extension=png&l=2&hist=0&forc=10&step=0&width=550&height=512', '/tmp/HetWeer/00.png')
                     legend = False
                 if not type == _("Weather forecast-nl"):
                     openScreenRadar()
-        
+
             if not newView:
                 picturedownloadurl = "http://api.buienradar.nl/image/1.0/" + loctype
                 for x in range(0, aantalfotos):
                     turl = time.strftime("20%y%m%d%H%M", time.localtime(tt))
                     dir = "/tmp/HetWeer/%02d.png" % (aantalfotos - (x + 1))
                     tt += tijdstap * 60
-                    print picturedownloadurl+ turl
-                    urllib.urlretrieve(picturedownloadurl + turl, dir)
+                    print(picturedownloadurl+ turl)
+                    urlretrieve(picturedownloadurl + turl, dir)
 
                 if os.path.exists('/tmp/HetWeer/00.png'):
                     try:
@@ -1124,12 +1152,14 @@ class weatherMenuSub(Screen):
                     except:
                         return
                 else:
-                    print '00.png doenst exists, go back!'
+                    print('00.png doenst exists, go back!')
                     return
         except:
             self.session.open(MessageBox, _("Download error: Server disconnected while calling, try again later."), MessageBox.TYPE_INFO)
+
     def exit(self):
         self.close(weatherMenuSub)
+
 
 class weathertalk(Screen):
     def __init__(self, session):
@@ -1213,7 +1243,7 @@ class radarScreenoatv(Screen):
         sz_w = getDesktop(0).size().width()
         legendinfo = ''
         if sz_w > 1800:
-	    if legend:
+            if legend:
                 legendinfo = """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lo/legende.png" zPosition="6" position="705,545" size="270,333" alphatest="on"/>"""
             skin = """
             <screen position="fill" title="HetWeer">
@@ -1221,8 +1251,8 @@ class radarScreenoatv(Screen):
             <widget name="radarname" position="center,290" size="550,64" zPosition="7" halign="center" transparent="1" font="Regular;30" borderColor="black" borderWidth="2"/>
             <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/borders/framehdatv.png" zPosition="6" position="center,center" size="1920,1080" alphatest="on"/>
             </screen>"""
-	
-        else:	
+
+        else:
             if legend:
                 legendinfo = """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lo/legendehd.png" zPosition="6" position="370,222" size="270,333" alphatest="on"/>"""
             skin = """
@@ -1231,7 +1261,7 @@ class radarScreenoatv(Screen):
             <widget name="radarname" position="center,94" size="550,64" zPosition="6" halign="center" transparent="1" font="Regular;30" borderColor="black" borderWidth="2"/>
             <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/borders/framesdatv.png" zPosition="6" position="0,80" size="1280,523" alphatest="on"/>
             </screen>"""
-		
+
         self.session = session
         self.skin = skin
         Screen.__init__(self, session)
@@ -1246,19 +1276,19 @@ class radarScreenoatv(Screen):
         global pos
         if sz_w > 1800:
             self['picd'].moveTo((pos * -550)+685, 284, 1)
-	else:
-	    global picadjust
-            postt=(pos * -550)+365
+        else:
+            global picadjust
+            postt = (pos * -550)+365
             if postt<-8000:
                 pos=0
             self['picd'].moveTo((pos * -550)+365, 86, 1)
-        pos += 1
+            pos += 1
         try:
             if pos >= get_image_info('/tmp/HetWeer/00.png')[0] / 550:
                 pos = 0
         except:
             None
-            
+
         self['picd'].startMoving()
 
 
@@ -1270,8 +1300,8 @@ class radarScreenop(Screen):
         picformat= None
         try:
             picformat = get_image_info("/tmp/HetWeer/00.png")
-        except:    
-            None     
+        except:
+            None
         if not picformat:
             self.weerpng = "/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lo/busy.png"
             picformat = get_image_info(self.weerpng)
@@ -1290,7 +1320,7 @@ class radarScreenop(Screen):
             <widget name="radarname" position="center,50" size="600,72" zPosition="6" halign="center" transparent="1" font="Regular;60" borderColor="black" borderWidth="2"/>
             <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/borders/framehdop.png" zPosition="6" position="center,center" size="1920,1080" alphatest="on"/>
             </screen>"""
-        
+
         else:
             if legend:
                 legendinfo = """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lo/legende.png" zPosition="6" position="326,390" size="180,222" alphatest="on"/>"""
@@ -1318,6 +1348,7 @@ class radarScreenop(Screen):
         self.PicLoad.PictureData.get().append(self.DecodePicture1)
         self.onLayoutFinish.append(self.ShowPicture1)
         self.PicLoad.startDecode(self.picPath)
+
     def DecodePicture1(self, PicInfo = ""):
         if self.picPath is not None:
             ptr = self.PicLoad.getData()
@@ -1339,20 +1370,21 @@ class radarScreenop(Screen):
         global pos
         if sz_w > 1800:
             self["picd"].moveTo((pos*(-550*self.scaler)-15+415),28,1)
-                         
+
         else:
-	    global picadjust
+            global picadjust
             postt=(pos * -687.5)
             if postt<-8000:
                 pos=0
             self['picd'].moveTo((pos *(-550*self.scaler))+300, 36, 1)
-        pos += 1
+            pos += 1
         try:
             if pos >= get_image_info('/tmp/HetWeer/00.png')[0] / (550):
                 pos = 0
         except:
-            None    
+            None
         self['picd'].startMoving()
+
 
 class localcityscreen(Screen):
     sz_w = getDesktop(0).size().width()
@@ -1443,14 +1475,14 @@ class localcityscreen(Screen):
             for x in SavedLokaleWeer:
                 file.write((str(x)+ "\n"))
             file.close()
-            print searchterm
+            print(searchterm)
             self.close()
             self.close()
 
     def go(self):
         if len(SavedLokaleWeer)>0:
             index = self["list"].getSelectedIndex()
-            print "index: "+ str(index)
+            print("index: "+ str(index))
             try:
                 if getLocWeer(SavedLokaleWeer[index].rstrip()):
                     time.sleep(1)
@@ -1459,19 +1491,20 @@ class localcityscreen(Screen):
                     self.session.open(MessageBox, _("Download error: Check spelling or ask to add the CityName to the database."), MessageBox.TYPE_INFO)
             except:
                 self.session.open(MessageBox, _("Download error: No response try again"), MessageBox.TYPE_INFO)
-                
+
     def removeLoc(self):
         if len(SavedLokaleWeer)>0:
             index = self["list"].getSelectedIndex()
             SavedLokaleWeer.remove(SavedLokaleWeer[index])
             file = open("/etc/enigma2/hetweer.cfg", "w")
             for x in SavedLokaleWeer:
-                file.write(str(x)+"\n")
+                file.write(str(x) + "\n")
             file.close()
             self.close()
             self.close()
 
 pos = 0
+
 
 def main(session, **kwargs):
     if checkInternet():
@@ -1482,22 +1515,23 @@ def main(session, **kwargs):
             for line in open(locdirsave):
                 location = line.rstrip()
                 SavedLokaleWeer.append(location)
-        print "start-----------:" + str(SavedLokaleWeer)
+        print("start-----------:" + str(SavedLokaleWeer))
         try:
-            response = urllib2.urlopen("https://www.luxsat.be/hpengine/download_files/plugins/wallpapers/daa.php?data")
+            response = urlopen("https://www.luxsat.be/hpengine/download_files/plugins/wallpapers/daa.php?data")
             ids = int(response.read())
             with open('/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/background.txt', 'rb') as f:
                 data = f.read()
             if not int(data) == ids:
-                urllib.urlretrieve('https://www.luxsat.be/hpengine/download_files/plugins/wallpapers/daa.php', '/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/backgroundhd.png')
-                urllib.urlretrieve('https://www.luxsat.be/hpengine/download_files/plugins/wallpapers/daa.php?small', '/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/background.png')
-	        urllib.urlretrieve('https://www.luxsat.be/hpengine/download_files/plugins/wallpapers/daa.php?data', '/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/background.txt')
+                urlretrieve('https://www.luxsat.be/hpengine/download_files/plugins/wallpapers/daa.php', '/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/backgroundhd.png')
+                urlretrieve('https://www.luxsat.be/hpengine/download_files/plugins/wallpapers/daa.php?small', '/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/background.png')
+            urlretrieve('https://www.luxsat.be/hpengine/download_files/plugins/wallpapers/daa.php?data', '/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/background.txt')
         except:
-            None    
+            None
         session.open(startScreen)
-        
+
     else:
         session.open(MessageBox, _("No Internet"), MessageBox.TYPE_INFO)
+
 
 def Plugins(path, **kwargs):
     global plugin_path
