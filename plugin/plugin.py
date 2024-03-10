@@ -81,7 +81,7 @@ if os.path.exists('/var/lib/opkg/info/enigma2-plugin-extensions-hetweer.control'
             try:
                 versienummer = versie.split('+')[1]
             except IndexError:
-                print
+                print()
 
 
 # WeerInfoCurVer = 6.0
@@ -202,7 +202,7 @@ def get_image_info(pic):
 
 
 def is_png(data):
-    return (data[:8] == "\211PNG\r\n\032\n"and (data[12:16] == "IHDR"))
+    return (data[:8] == b'\x89PNG\r\n\x1a\n' and (data[12:16] == b'IHDR'))
 
 
 def checkInternet():
@@ -764,8 +764,8 @@ class weeroverview(Screen):
 
 class veertien(Screen):
     def __init__(self, session):
-        sz_w = getDesktop(0).size().width()
         global weatherData
+        sz_w = getDesktop(0).size().width()
         if sz_w > 1800:
             dayinfoblok = ""
             dataDagen = weatherData["days"]
@@ -799,7 +799,7 @@ class veertien(Screen):
                 if rainamount > 100:
                     rainamount = 100
                 yposline = yposline+maxheightshift
-                if day < 13:
+                if day < len(dataDagen):
                     dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/""" + str(tempdiff) + """.png" position=\"""" + str((130 + (118 * day))+59) + ""","""+str(yposline)+"""\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>
                     <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/bar.png" position=\"""" + str((130 + (118 * day))+120) + """,140" size="10,900" zPosition="10" transparent="0" alphatest="blend"/>
 
@@ -993,7 +993,7 @@ class weatherMenuSub(Screen):
             <widget name="key_red" position="185,643" size="220,28" zPosition="1" transparent="1" font="Regular;24" borderColor="black" borderWidth="1" halign="left"/>
         </screen>"""
 
-    listNamesnl = [_("Rainfall radar"), _("Temperature"), _("Drizzle"), _("Thunder radar"), _("Clouds radar"), _("Mist radar"), _("Snow radar"), _("Sun radar"), _("Sunpower-UV"), _("Satellite"), _("Weather forecast-nl")]
+    listNamesnl = [_("Temperature"), _("Rainfall radar"), _("Drizzle"), _("Thunder radar"), _("Clouds radar"), _("Mist radar"), _("Snow radar"), _("Sun radar"), _("Sunpower-UV"), _("Satellite"), _("Weather forecast-nl")]
     listNamesbe = [_("Rainfall radar"), _("Drizzle"), _("Thunder radar"), _("Clouds radar"), _("Hail radar"), _("Snow radar"), _("Sun radar"), _("Satellite"), _("Weather forecast-nl")]
     listNameseu = [_("Rainfall radar"), _("Thunder radar"), _("Satellite"), _("Weather forecast-nl")]
 
@@ -1155,6 +1155,8 @@ class weatherMenuSub(Screen):
                     print('00.png doenst exists, go back!')
                     return
         except:
+            import traceback
+            traceback.print_exc()
             self.session.open(MessageBox, _("Download error: Server disconnected while calling, try again later."), MessageBox.TYPE_INFO)
 
     def exit(self):
@@ -1282,7 +1284,7 @@ class radarScreenoatv(Screen):
             if postt<-8000:
                 pos=0
             self['picd'].moveTo((pos * -550)+365, 86, 1)
-            pos += 1
+        pos += 1
         try:
             if pos >= get_image_info('/tmp/HetWeer/00.png')[0] / 550:
                 pos = 0
@@ -1377,7 +1379,7 @@ class radarScreenop(Screen):
             if postt<-8000:
                 pos=0
             self['picd'].moveTo((pos *(-550*self.scaler))+300, 36, 1)
-            pos += 1
+        pos += 1
         try:
             if pos >= get_image_info('/tmp/HetWeer/00.png')[0] / (550):
                 pos = 0
@@ -1524,7 +1526,7 @@ def main(session, **kwargs):
             if not int(data) == ids:
                 urlretrieve('https://www.luxsat.be/hpengine/download_files/plugins/wallpapers/daa.php', '/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/backgroundhd.png')
                 urlretrieve('https://www.luxsat.be/hpengine/download_files/plugins/wallpapers/daa.php?small', '/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/background.png')
-            urlretrieve('https://www.luxsat.be/hpengine/download_files/plugins/wallpapers/daa.php?data', '/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/background.txt')
+                urlretrieve('https://www.luxsat.be/hpengine/download_files/plugins/wallpapers/daa.php?data', '/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/background.txt')
         except:
             None
         session.open(startScreen)
