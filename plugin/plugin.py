@@ -7,12 +7,9 @@ import json
 import math
 import struct
 import gettext
-import datetime, time
+import datetime
 import socket
 socket.setdefaulttimeout(10)
-# import urllib2, urllib
-# from urllib import urlretrieve
-
 from Screens.Console import Console
 from Components.Language import language
 from Plugins.Plugin import PluginDescriptor
@@ -222,6 +219,7 @@ def checkInternet():
 def getScale():
     return AVSwitch().getFramebufferScale()
 
+
 global weatherData
 sz_w = getDesktop(0).size().width()
 state = ["","","","","","",""]
@@ -272,10 +270,10 @@ def getLocWeer(iscity = None):
                         break
                     entrselect += 1
             print("cipt id find", staddata[entryselect]["id"])
-            response = urlopen("https://forecast.buienradar.nl/2.0/forecast/"+str(staddata[entryselect]["id"]))
+            response = urlopen("https://forecast.buienradar.nl/2.0/forecast/" + str(staddata[entryselect]["id"]))
             antw = response.read()
             weatherData = json.loads(antw)
-            citynamedisplay = staddata[entryselect]["name"]+"  "+staddata[entryselect]["countrycode"]
+            citynamedisplay = staddata[entryselect]["name"]+"  " + staddata[entryselect]["countrycode"]
 
             return True
         except Exception as e:
@@ -421,14 +419,14 @@ class weeroverview(Screen):
             peocpic = "temphot.png"
         else:
             peocpic = "tempeven.png"
-        print("GE0-------->"+str(protemp[0]))
-        print("GE1-------->"+str(protemp[1]))
+        print("GE0-------->" + str(protemp[0]))
+        print("GE1-------->" + str(protemp[1]))
         peocpichd = """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/windhd/%s" position="1112,143" size="90,80" zPosition="2" transparent="0" alphatest="blend"/>""" % (peocpic)
         peocpicsd = """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/wind/%s" position="752,99" size="60,53" zPosition="2" transparent="0" alphatest="blend"/>""" % (peocpic)
         if sz_w > 1800:
             for day in range(0, 7):
                 uurcount = 0
-                dagen = dataDagen[day+1]
+                dagen = dataDagen[day + 1]
                 happydays = dataDagen[day]
                 windkracht = "na"
                 losticon = "na"
@@ -445,20 +443,19 @@ class weeroverview(Screen):
                 if happydays.get("iconcode"):
                     losticon = happydays["iconcode"]
                 dagenbefore = dataDagen[day]
-                curtemp = int(dagenbefore["maxtemperature"])
-                tempdiff = (int(dataDagen[day+1]["maxtemperature"])-curtemp)
+                tempdiff = (int(dataDagen[day + 1]["maxtemperature"]) - curtemp)
                 lineheight = 0
                 if tempdiff > 0:
                     lineheight = tempdiff*31
                 yposline = (1200-(curtemp*31))-lineheight
-                # dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/""" + str(tempdiff) + """.png" position=\"""" + str(130 + (99 * day)) + ""","""+str(yposline)+"""\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>"""
+
                 curtemp = int(dagenbefore["mintemperature"])
-                tempdiff = (int(dataDagen[day+1]["mintemperature"])-curtemp)
+                tempdiff = (int(dataDagen[day + 1]["mintemperature"]) - curtemp)
                 lineheight = 0
                 if tempdiff > 0:
                     lineheight = tempdiff*31
                 yposline = (1200-(curtemp*31))-lineheight
-                # dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/b""" + str(tempdiff) + """.png" position=\"""" + str(130 + (99 * day)) + ""","""+str(yposline)+"""\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>"""
+                # dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/b""" + str(tempdiff) + """.png" position=\"""" + str(130 + (99 * day)) + """,""" + str(yposline) + """\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>"""
                 dayinfoblok += """
                     <widget name="bigWeerIcon1""" + str(day) + """" position="636,102" size="150,150" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/iconbighd/""" + str(dataUrr) + """.png" zPosition="1" alphatest="on"/>
                     <widget name="bigDirIcon1""" + str(day) + """" position="1170,343" size="42,42" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/windhd/""" + str(windkracht) + """.png" zPosition="1" alphatest="on"/>
@@ -474,17 +471,17 @@ class weeroverview(Screen):
                 if day == 0:
                     for data in dataUrr:
                         blocks = len(dataUrr)
-                        if len(dataUrr)<8:
+                        if len(dataUrr) < 8:
                             blocks = 8
-                        if data.get("hour") and ((data["hour"]-1)%math.ceil(blocks/8)) == 0:
-                            dayinfoblok += """<widget name="dayIcon""" + str(day)+""+str(uurcount)+ """" position=\"""" + str(120 + (216 * uurcount)) + """,749" size="72,72" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/iconhd/"""+data["iconcode"]+""".png" zPosition="1" alphatest="on"/>"""
-                            print("maak : "+ str(day)+"|"+str(uurcount))
+                        if data.get("hour") and ((data["hour"]-1) % math.ceil(blocks/8)) == 0:
+                            dayinfoblok += """<widget name="dayIcon""" + str(day) + "" + str(uurcount) + """" position=\"""" + str(120 + (216 * uurcount)) + """,749" size="72,72" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/iconhd/"""+data["iconcode"]+""".png" zPosition="1" alphatest="on"/>"""
+                            print("maak : " + str(day) + "|" + str(uurcount))
                             uurcount += 1
                 else:
                     for data in dataUrr:
-                        if data.get("hour") and (data["hour"]-1)%3 == 0:
-                            dayinfoblok += """<widget name="dayIcon""" + str(day)+""+str(uurcount)+ """" position=\"""" + str(120 + (216 * uurcount)) + """,749" size="72,72" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/iconhd/"""+data["iconcode"]+""".png" zPosition="1" alphatest="on"/>"""
-                            print("maak : "+ str(day)+"|"+str(uurcount))
+                        if data.get("hour") and (data["hour"]-1) % 3 == 0:
+                            dayinfoblok += """<widget name="dayIcon""" + str(day) + "" + str(uurcount) + """" position=\"""" + str(120 + (216 * uurcount)) + """,749" size="72,72" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/iconhd/"""+data["iconcode"]+""".png" zPosition="1" alphatest="on"/>"""
+                            print("maak : " + str(day) + "|" + str(uurcount))
                             uurcount += 1
             for uur in range(0, 8):
                 dayinfoblok += """
@@ -514,7 +511,7 @@ class weeroverview(Screen):
         else:
             for day in range(0, 7):
                 uurcount = 0
-                dagen = dataDagen[day+1]
+                dagen = dataDagen[day + 1]
                 happydays = dataDagen[day]
                 windkracht = "na"
                 losticon = "na"
@@ -546,17 +543,17 @@ class weeroverview(Screen):
                 if day == 0:
                     for data in dataUrr:
                         blocks = len(dataUrr)
-                        if len(dataUrr)<8:
+                        if len(dataUrr) < 8:
                             blocks = 8
-                        if data.get("hour") and (data["hour"]-1)%math.ceil(blocks/8) == 0:
-                            dayinfoblok += """<widget name="dayIcon""" + str(day)+""+str(uurcount)+ """" position=\"""" + str(80 + (144 * uurcount)) + """,494" size="48,48" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/icon/"""+data["iconcode"]+""".png" zPosition="1" alphatest="on"/>"""
-                            print("maak : "+ str(day)+"|"+str(uurcount))
+                        if data.get("hour") and (data["hour"]-1) % math.ceil(blocks/8) == 0:
+                            dayinfoblok += """<widget name="dayIcon""" + str(day) + "" + str(uurcount)+ """" position=\"""" + str(80 + (144 * uurcount)) + """,494" size="48,48" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/icon/"""+data["iconcode"]+""".png" zPosition="1" alphatest="on"/>"""
+                            print("maak : " + str(day) + "|" + str(uurcount))
                             uurcount += 1
                 else:
                     for data in dataUrr:
                         if data.get("hour") and (data["hour"]-1)%3 == 0:
-                            dayinfoblok += """<widget name="dayIcon""" + str(day)+""+str(uurcount)+ """" position=\"""" + str(80 + (144 * uurcount)) + """,494" size="48,48" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/icon/"""+data["iconcode"]+""".png" zPosition="1" alphatest="on"/>"""
-                            print("maak : "+ str(day)+"|"+str(uurcount))
+                            dayinfoblok += """<widget name="dayIcon""" + str(day) + "" + str(uurcount)+ """" position=\"""" + str(80 + (144 * uurcount)) + """,494" size="48,48" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/icon/"""+data["iconcode"]+""".png" zPosition="1" alphatest="on"/>"""
+                            print("maak : "+ str(day) + "|" + str(uurcount))
                             uurcount += 1
             for uur in range(0, 8):
                 dayinfoblok += """
@@ -591,25 +588,25 @@ class weeroverview(Screen):
 
         self["city1"] = Label(str(citynamedisplay))
         for day in range(0, 7):
-            self["bigWeerIcon1"+str(day)] = Pixmap()
-            self["bigWeerIcon1"+str(day)].hide()
-            self["bigDirIcon1"+str(day)] = Pixmap()
-            self["bigDirIcon1"+str(day)].hide()
+            self["bigWeerIcon1" + str(day)] = Pixmap()
+            self["bigWeerIcon1" + str(day)].hide()
+            self["bigDirIcon1" + str(day)] = Pixmap()
+            self["bigDirIcon1" + str(day)].hide()
         self["bigtemp1"] = Label("")
         self["bigweathertype1"] = Label("")
         self["GevoelsTemp1"] = Label("")
         self["winddir1"] = Label("East")
         self["yellowdot"] = MovingPixmap()
         for uur in range(0, 8):
-            self["dayhour3"+str(uur)] = Label(_("00h"))
-            self["daytemp3"+str(uur)] = Label("--\xb0C")
-            self["sunpercent3"+str(uur)] = Label("--%")
-            self["daypercent3"+str(uur)] = Label("--%")
-            self["hrdayper3"+str(uur)] = Label("--%")
-            self["dayspeed3"+str(uur)] = Label(_("--Km/h"))
+            self["dayhour3" + str(uur)] = Label(_("00h"))
+            self["daytemp3" + str(uur)] = Label("--\xb0C")
+            self["sunpercent3" + str(uur)] = Label("--%")
+            self["daypercent3" + str(uur)] = Label("--%")
+            self["hrdayper3" + str(uur)] = Label("--%")
+            self["dayspeed3" + str(uur)] = Label(_("--Km/h"))
             for day in range(0, 7):
-                self["dayIcon"+str(day)+str(uur)] = Pixmap()
-                self["dayIcon"+str(day)+str(uur)].hide()
+                self["dayIcon" + str(day)+str(uur)] = Pixmap()
+                self["dayIcon" + str(day)+str(uur)].hide()
         dataDagen = weatherData["days"]
         for day in range(1,8):
             dagen = dataDagen[day-1]
@@ -629,15 +626,15 @@ class weeroverview(Screen):
                 info1 += str(strftime("%A", localtime(unixtimecode))).title()[:2]
                 info1 += str(strftime(" %d", localtime(unixtimecode)))
             if dagen.get("mintemp"):
-                info2 += '{:>3}'.format(str("%.0f" % dagen["mintemp"])+"\xb0")
+                info2 += '{:>3}'.format(str("%.0f" % dagen["mintemp"]) + "\xb0")
             elif dagen.get("mintemperature"):
-                info2 += '{:>3}'.format(str("%.0f" % dagen["mintemperature"])+"\xb0")
+                info2 += '{:>3}'.format(str("%.0f" % dagen["mintemperature"]) + "\xb0")
             else:
                 info2 += "--.-\xb0C"
             if dagen.get("maxtemp"):
-                info3 += '{:>3}'.format(str("%.0f" % dagen["maxtemp"])+"\xb0")
+                info3 += '{:>3}'.format(str("%.0f" % dagen["maxtemp"]) + "\xb0")
             elif dagen.get("maxtemperature"):
-                info3 += '{:>3}'.format(str("%.0f" % dagen["maxtemperature"])+"\xb0")
+                info3 += '{:>3}'.format(str("%.0f" % dagen["maxtemperature"]) + "\xb0")
             else:
                 info3 += "--.-\xb0C"
             if dagen.get("beaufort"):
@@ -645,14 +642,14 @@ class weeroverview(Screen):
             else:
                 info4 += "-"
             if dagen.get("windspeed"):
-                info5 += str(dagen["windspeed"])+_("Km/h")
+                info5 += str(dagen["windspeed"]) + _("Km/h")
             else:
                 info5 += _("Km/h")
-            self["smallday2"+str(day-1)] = Label(info1)
-            self["maxtemp2"+str(day-1)] = Label(info3)
-            self["minitemp2"+str(day-1)] = Label(info2)
-            self["sunriselab"] = Label(sunrise+" - "+sunset)
-            self["weertype2"+str(day-1)] = Label(icontotext(iconclass))
+            self["smallday2" + str(day-1)] = Label(info1)
+            self["maxtemp2" + str(day-1)] = Label(info3)
+            self["minitemp2" + str(day-1)] = Label(info2)
+            self["sunriselab"] = Label(sunrise+" - " + sunset)
+            self["weertype2" + str(day-1)] = Label(icontotext(iconclass))
             self["myActionMap"] = ActionMap(["SetupActions"], {"left": self.left, "right": self.right, "cancel": self.cancel,"ok": self.veertienbut}, -1)
             self.updateFrameselect()
 
@@ -671,9 +668,9 @@ class weeroverview(Screen):
             self.selected = 0
 
         if sz_w > 1800:
-            self["yellowdot"].moveTo(294+(248*self.selected),464,1)
+            self["yellowdot"].moveTo(294 + (248 * self.selected), 464, 1)
         else:
-            self["yellowdot"].moveTo(190+(165*self.selected),308,1)
+            self["yellowdot"].moveTo(190 + (165 * self.selected), 308, 1)
         self["yellowdot"].startMoving()
         global weatherData
         dataDagen = weatherData["days"]
@@ -688,11 +685,11 @@ class weeroverview(Screen):
         self["winddir1"].setText(_("Wind direction: ") + "NA")
         try:
             self["bigtemp1"].setText('{:>4}'.format(str("%.1f" % dataPerUur[(0)]["temperature"])))
-            self["GevoelsTemp1"].setText(_("Feels Like: ")+str("%.1f" % dataPerUur[(0)]["feeltemperature"])+"\xb0C")
-            self["winddir1"].setText(_("Wind direction: ")+str(winddirtext(dataPerUur[(0)]["winddirection"])))
+            self["GevoelsTemp1"].setText(_("Feels Like: ") + str("%.1f" % dataPerUur[(0)]["feeltemperature"]) + "\xb0C")
+            self["winddir1"].setText(_("Wind direction: ") + str(winddirtext(dataPerUur[(0)]["winddirection"])))
             self["bigweathertype1"].setText(icontotext(str(dataPerUur[(0)]["iconcode"])))
         except:
-            0+0
+            0 + 0
         feeltext = "na"
         if dataDagen[0].get("feeltemperature"):
             feeltext = dataDagen[0]["feeltemperature"]
@@ -706,52 +703,52 @@ class weeroverview(Screen):
             typetext = dataDagen[0]["iconcode"]
 
         dataPerUur = weatherData["days"][self.selected]["hours"]
-        self["bigWeerIcon1"+str(0)].show()
-        self["bigDirIcon1"+str(0)].show()
+        self["bigWeerIcon1" + str(0)].show()
+        self["bigDirIcon1" + str(0)].show()
 
-        for perUurUpdate in range(0,8):
+        for perUurUpdate in range(0, 8):
             for day in range(0, 7):
-                self["dayIcon"+str(day)+str(perUurUpdate)].hide()
-            self["dayIcon"+str(self.selected)+str(perUurUpdate)].show()
+                self["dayIcon" + str(day) + str(perUurUpdate)].hide()
+            self["dayIcon" + str(self.selected) + str(perUurUpdate)].show()
             if self.selected == 0:
                 jumppoint = int(math.ceil(len(dataPerUur)/8))
             else:
                 jumppoint = 3
-            if jumppoint<1:
-                jumppoint=1
+            if jumppoint < 1:
+                jumppoint = 1
             try:
 
                 if (perUurUpdate*jumppoint) < len(dataPerUur):
-                    self["dayhour3"+str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["hour"])+_("h"))
-                    self["daytemp3"+str(perUurUpdate)].setText('{:>4}'.format(str("%.0f" % dataPerUur[(perUurUpdate*jumppoint)]["temperature"])+"\xb0C"))
-                    self["daypercent3"+str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["precipation"])+"%")
-                    self["dayspeed3"+str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["windspeed"])+_("Km/h"))
-                    self["sunpercent3"+str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["sunshine"])+"%")
-                    self["hrdayper3"+str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["humidity"])+"%")
+                    self["dayhour3" + str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["hour"]) + _("h"))
+                    self["daytemp3" + str(perUurUpdate)].setText('{:>4}'.format(str("%.0f" % dataPerUur[(perUurUpdate*jumppoint)]["temperature"]) + "\xb0C"))
+                    self["daypercent3" + str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["precipation"]) + "%")
+                    self["dayspeed3" + str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["windspeed"]) + _("Km/h"))
+                    self["sunpercent3" + str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["sunshine"]) + "%")
+                    self["hrdayper3" + str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["humidity"]) + "%")
 
                 else:
-                    self["dayhour3"+str(perUurUpdate)].setText("")
-                    self["daytemp3"+str(perUurUpdate)].setText("")
-                    self["daypercent3"+str(perUurUpdate)].setText("")
-                    self["dayspeed3"+str(perUurUpdate)].setText("")
-                    self["sunpercent3"+str(perUurUpdate)].setText("")
-                    self["hrdayper3"+str(perUurUpdate)].setText("")
+                    self["dayhour3" + str(perUurUpdate)].setText("")
+                    self["daytemp3" + str(perUurUpdate)].setText("")
+                    self["daypercent3" + str(perUurUpdate)].setText("")
+                    self["dayspeed3" + str(perUurUpdate)].setText("")
+                    self["sunpercent3" + str(perUurUpdate)].setText("")
+                    self["hrdayper3" + str(perUurUpdate)].setText("")
             except:
                 try:
                     if (perUurUpdate*jumppoint) < len(dataPerUur):
-                        self["dayhour3"+str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["hour"])+_("h"))
-                        self["daytemp3"+str(perUurUpdate)].setText('{:>4}'.format(str("%.0f" % dataPerUur[(perUurUpdate*jumppoint)]["temperature"])+"\xb0C"))
-                        self["daypercent3"+str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["precipitation"])+"%")
-                        self["dayspeed3"+str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["windspeed"])+_("Km/h"))
-                        self["sunpercent3"+str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["sunshine"])+"%")
-                        self["hrdayper3"+str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["humidity"])+"%")
+                        self["dayhour3" + str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["hour"]) + _("h"))
+                        self["daytemp3" + str(perUurUpdate)].setText('{:>4}'.format(str("%.0f" % dataPerUur[(perUurUpdate*jumppoint)]["temperature"]) + "\xb0C"))
+                        self["daypercent3" + str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["precipitation"]) + "%")
+                        self["dayspeed3" + str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["windspeed"]) + _("Km/h"))
+                        self["sunpercent3" + str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["sunshine"]) + "%")
+                        self["hrdayper3" + str(perUurUpdate)].setText(str(dataPerUur[(perUurUpdate*jumppoint)]["humidity"]) + "%")
                     else:
-                        self["dayhour3"+str(perUurUpdate)].setText("")
-                        self["daytemp3"+str(perUurUpdate)].setText("")
-                        self["daypercent3"+str(perUurUpdate)].setText("")
-                        self["dayspeed3"+str(perUurUpdate)].setText("")
-                        self["sunpercent3"+str(perUurUpdate)].setText("")
-                        self["hrdayper3"+str(perUurUpdate)].setText("")
+                        self["dayhour3" + str(perUurUpdate)].setText("")
+                        self["daytemp3" + str(perUurUpdate)].setText("")
+                        self["daypercent3" + str(perUurUpdate)].setText("")
+                        self["dayspeed3" + str(perUurUpdate)].setText("")
+                        self["sunpercent3" + str(perUurUpdate)].setText("")
+                        self["hrdayper3" + str(perUurUpdate)].setText("")
                 except:
                     None
 
@@ -774,12 +771,12 @@ class veertien(Screen):
                 dagenbefore = dataDagen[day]
                 curtemp = int(round(dagenbefore["maxtemperature"]))
                 lineheight = 0
-                if day < len(dataDagen)-1:
-                    tempdiff = int(round(dataDagen[day+1]["maxtemperature"])-curtemp)
+                if day < len(dataDagen) - 1:
+                    tempdiff = int(round(dataDagen[day + 1]["maxtemperature"])-curtemp)
                     if tempdiff > 0:
-                        lineheight = tempdiff*18
-                yposline = (1200-(curtemp*18))-lineheight
-                yposline = (((yposline)+lineheight)-12)
+                        lineheight = tempdiff * 18
+                yposline = (1200-(curtemp * 18))-lineheight
+                yposline = (((yposline) + lineheight) - 12)
                 if yposline < maxheightshift:
                     maxheightshift = yposline
             print("----> maxponi",maxheightshift)
@@ -789,22 +786,22 @@ class veertien(Screen):
                 dagenbefore = dataDagen[day]
                 curtemp = int(round(dagenbefore["maxtemperature"]))
                 lineheight = 0
-                if day < len(dataDagen)-1:
-                    tempdiff = int(round(dataDagen[day+1]["maxtemperature"])-curtemp)
+                if day < len(dataDagen) - 1:
+                    tempdiff = int(round(dataDagen[day + 1]["maxtemperature"])-curtemp)
                     if tempdiff > 0:
-                        lineheight = tempdiff*18
-                yposline = (1200-(curtemp*18))-lineheight
+                        lineheight = tempdiff * 18
+                yposline = (1200 - (curtemp * 18))-lineheight
                 shiftstart = 130
-                rainamount = (int(float(dagenbefore["precipitationmm"])*2))
+                rainamount = (int(float(dagenbefore["precipitationmm"]) * 2))
                 if rainamount > 100:
                     rainamount = 100
-                yposline = yposline+maxheightshift
+                yposline = yposline + maxheightshift
                 if day < len(dataDagen):
-                    dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/""" + str(tempdiff) + """.png" position=\"""" + str((130 + (118 * day))+59) + ""","""+str(yposline)+"""\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>
-                    <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/bar.png" position=\"""" + str((130 + (118 * day))+120) + """,140" size="10,900" zPosition="10" transparent="0" alphatest="blend"/>
+                    dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/""" + str(tempdiff) + """.png" position=\"""" + str((130 + (118 * day)) + 59) + """,""" + str(yposline) + """\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>
+                    <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/bar.png" position=\"""" + str((130 + (118 * day)) + 120) + """,140" size="10,900" zPosition="10" transparent="0" alphatest="blend"/>
 
                     """
-                dayinfoblok += """<widget name="linetempmax""" + str(day) + """" position=\"""" + str(((130 + (118 * day))-18)+59) + ""","""+str(((yposline-45)+lineheight))+"""\" size="90,54" zPosition="15" font="Regular;30" transparent="1" borderColor="black" borderWidth="1"/>
+                dayinfoblok += """<widget name="linetempmax""" + str(day) + """" position=\"""" + str(((130 + (118 * day))-18)+59) + """,""" + str(((yposline-45)+lineheight)) + """\" size="90,54" zPosition="15" font="Regular;30" transparent="1" borderColor="black" borderWidth="1"/>
                 <widget name="bigWeerIcon1""" + str(day) + """" position=\"""" + str((130 + (118 * day))+28) + """,267" size="150,150" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/iconhd/""" + str(dagenbefore["iconcode"]) + """.png" zPosition="1" alphatest="on"/>
                 <widget name="wind""" + str(day) + """" position=\"""" + str((130 + (118 * day))+40) + """,375" size="150,150" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/wind/""" + str(dagenbefore["winddirection"]) + """.png" zPosition="2" transparent="0" alphatest="blend"/>
                 <widget name="city1" position="130,45" size="800,60" zPosition="3" valign="center" halign="left" font="Regular;50" borderColor="black" borderWidth="1" transparent="1"/>
@@ -813,36 +810,36 @@ class veertien(Screen):
                 <widget name="regenval""" + str(day) + """" position=\"""" + str((134 + (118 * day))+0) + """,600" size="118,54" valign="center" halign="center" zPosition="20" font="Regular;25" transparent="1" borderColor="black" borderWidth="1"/>
                 <widget name="windspeed""" + str(day) + """" position=\"""" + str((134 + (118 * day))+0) + """,435" size="118,54" valign="center" halign="center" zPosition="20" font="Regular;25" transparent="1" borderColor="black" borderWidth="1"/>
                 <widget name="regenvalunit""" + str(day) + """" position=\"""" + str((134 + (118 * day))+0) + """,600" size="118,54" valign="center" halign="center" zPosition="20" font="Regular;30" transparent="1" borderColor="black" borderWidth="1"/>
-                <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/rain.png" position=\"""" + str((120 + (118 * day))+45) + ""","""+str((600)-rainamount)+"""\" size="60,"""+str(rainamount)+"""\" zPosition="12" transparent="0" alphatest="blend"/>
-                <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/rainstond.png" position=\"""" + str((110 + (118 * day))+45) + ""","""+str((600))+"""\" size="80,10" zPosition="15" transparent="0" alphatest="blend"/>"""
-                dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/rdot.png" position=\"""" + str(((130 + (118 * day))+59)-12) + ""","""+str((((yposline)+lineheight)-12))+"""\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>"""
-                self["linetempmax"+str(day)] = Label(str(curtemp))
-                self["windspeed"+str(day)] = Label(str(dagenbefore["windspeed"])+" km/h")
-                self["regenval"+str(day)] = Label(str(dagenbefore["precipitationmm"])+" mm")
-                self["regenvalunit"+str(day)] = Label(str(""))
+                <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/rain.png" position=\"""" + str((120 + (118 * day))+45) + """,""" + str((600)-rainamount) + """\" size="60,""" + str(rainamount) + """\" zPosition="12" transparent="0" alphatest="blend"/>
+                <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/rainstond.png" position=\"""" + str((110 + (118 * day))+45) + """,""" + str((600)) + """\" size="80,10" zPosition="15" transparent="0" alphatest="blend"/>"""
+                dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/rdot.png" position=\"""" + str(((130 + (118 * day))+59)-12) + """,""" + str((((yposline)+lineheight)-12)) + """\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>"""
+                self["linetempmax" + str(day)] = Label(str(curtemp))
+                self["windspeed" + str(day)] = Label(str(dagenbefore["windspeed"]) + " km/h")
+                self["regenval" + str(day)] = Label(str(dagenbefore["precipitationmm"]) + " mm")
+                self["regenvalunit" + str(day)] = Label(str(""))
                 curtemp = int(round(dagenbefore["mintemperature"]))
                 lineheight = 0
-                if day < len(dataDagen)-1:
-                    tempdiff = int(round(dataDagen[day+1]["mintemperature"])-curtemp)
+                if day < len(dataDagen) - 1:
+                    tempdiff = int(round(dataDagen[day + 1]["mintemperature"])-curtemp)
                     if tempdiff > 0:
-                        lineheight = tempdiff*18
-                yposline = (1200-(curtemp*18))-lineheight
+                        lineheight = tempdiff * 18
+                yposline = (1200-(curtemp * 18))-lineheight
                 yposline = yposline+maxheightshift
-                if day < len(dataDagen)-1:
-                    dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/b""" + str(tempdiff) + """.png" position=\"""" + str((130 + (118 * day))+59) + ""","""+str(yposline)+"""\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>"""
-                dayinfoblok += """<widget name="linetempmin""" + str(day) + """" position=\"""" + str(((130 + (118 * day))-18)+59) + ""","""+str((yposline+15)+lineheight)+"""\" size="90,54" zPosition="15" font="Regular;30" transparent="1" borderColor="black" borderWidth="1"/>"""
-                dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/bdot.png" position=\"""" + str(((130 + (118 * day))+59)-12) + ""","""+str(((yposline)+lineheight)-12)+"""\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>"""
-                self["linetempmin"+str(day)] = Label(str(curtemp))
-                self["bigWeerIcon1"+str(day)] = Pixmap()
-                self["wind"+str(day)] = Pixmap()
+                if day < len(dataDagen) - 1:
+                    dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/b""" + str(tempdiff) + """.png" position=\"""" + str((130 + (118 * day))+59) + """,""" + str(yposline) + """\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>"""
+                dayinfoblok += """<widget name="linetempmin""" + str(day) + """" position=\"""" + str(((130 + (118 * day))-18)+59) + """,""" + str((yposline+15)+lineheight) + """\" size="90,54" zPosition="15" font="Regular;30" transparent="1" borderColor="black" borderWidth="1"/>"""
+                dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lines/bdot.png" position=\"""" + str(((130 + (118 * day))+59)-12) + """,""" + str(((yposline)+lineheight)-12) + """\" size="200,200" zPosition="10" transparent="0" alphatest="blend"/>"""
+                self["linetempmin" + str(day)] = Label(str(curtemp))
+                self["bigWeerIcon1" + str(day)] = Pixmap()
+                self["wind" + str(day)] = Pixmap()
 
                 mydate = dagenbefore["date"][:-9]
                 unixtimecode = time.mktime(datetime.datetime(int(mydate[:4]), int(mydate[5:][:2]), int(mydate[8:][:2])).timetuple())
                 unixtimecode = unixtimecode
                 info1 = str(strftime("%A", localtime(unixtimecode))).title()[:2]
                 info2 = str(strftime("%d-%m", localtime(unixtimecode)))
-                self["dagvandeweek"+str(day)] = Label(str(info1).upper())
-                self["datumvandeweek"+str(day)] = Label(str(info2))
+                self["dagvandeweek" + str(day)] = Label(str(info1).upper())
+                self["datumvandeweek" + str(day)] = Label(str(info2))
             self["city1"] = Label(str(citynamedisplay))
             skin = """
                 <screen position="fill" flags="wfNoBorder">
@@ -865,74 +862,74 @@ class veertien(Screen):
                 curtemp = int(round(dagenbefore["maxtemperature"]))
                 lineheight = 0
                 if day < len(dataDagen)-1:
-                    tempdiff = int(round(dataDagen[day+1]["maxtemperature"])-curtemp)
+                    tempdiff = int(round(dataDagen[day + 1]["maxtemperature"])-curtemp)
                     if tempdiff > 0:
-                        lineheight = tempdiff*12
-                yposline = (800-(curtemp*12))-lineheight
-                yposline = (((yposline)+lineheight)-8)
+                        lineheight = tempdiff * 12
+                yposline = (800 - (curtemp * 12))-lineheight
+                yposline = (((yposline) + lineheight) - 8)
                 if yposline < maxheightshift:
                     maxheightshift = yposline
             print("----> maxponi",maxheightshift)
-            maxheightshift = 467-maxheightshift
+            maxheightshift = 467 - maxheightshift
             print("----> shift",maxheightshift)
             for day in range(0, len(dataDagen)):
                 dagenbefore = dataDagen[day]
                 curtemp = int(round(dagenbefore["maxtemperature"]))
                 lineheight = 0
-                if day < len(dataDagen)-1:
-                    tempdiff = int(round(dataDagen[day+1]["maxtemperature"])-curtemp)
+                if day < len(dataDagen) - 1:
+                    tempdiff = int(round(dataDagen[day + 1]["maxtemperature"]) - curtemp)
                     if tempdiff > 0:
-                        lineheight = tempdiff*12
-                yposline = (800-(curtemp*12))-lineheight
+                        lineheight = tempdiff * 12
+                yposline = (800 - (curtemp * 12)) - lineheight
                 shiftstart = 87
-                rainamount = (int(float(dagenbefore["precipitationmm"])*2))
+                rainamount = (int(float(dagenbefore["precipitationmm"]) * 2))
                 if rainamount > 67:
                     rainamount = 67
                 yposline = yposline+maxheightshift
-                if day < len(dataDagen)-1:
-                    dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/linessd/""" + str(tempdiff) + """.png" position=\"""" + str((87 + (79 * day))+40) + ""","""+str(yposline)+"""\" size="134,134" zPosition="10" transparent="0" alphatest="blend"/>
+                if day < len(dataDagen) - 1:
+                    dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/linessd/""" + str(tempdiff) + """.png" position=\"""" + str((87 + (79 * day))+40) + """,""" + str(yposline) + """\" size="134,134" zPosition="10" transparent="0" alphatest="blend"/>
                     <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/linessd/bar.png" position=\"""" + str((87 + (79 * day))+80) + """,94" size="3,650" zPosition="10" transparent="0" alphatest="blend"/>
 
                     """
-                dayinfoblok += """<widget name="linetempmax""" + str(day) + """" position=\"""" + str(((87 + (79 * day))-12)+40) + ""","""+str(((yposline-30)+lineheight))+"""\" size="60,36" zPosition="15" font="Regular;20" transparent="1" borderColor="black" borderWidth="1"/>
-                <widget name="bigWeerIcon1""" + str(day) + """" position=\"""" + str((87 + (79 * day))+19) + """,178" size="100,100" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/icon/""" + str(dagenbefore["iconcode"]) + """.png" zPosition="1" alphatest="on"/>
+                dayinfoblok += """<widget name="linetempmax""" + str(day) + """" position=\"""" + str(((87 + (79 * day)) - 12) + 40) + """,""" + str(((yposline-30) + lineheight)) + """\" size="60,36" zPosition="15" font="Regular;20" transparent="1" borderColor="black" borderWidth="1"/>
+                <widget name="bigWeerIcon1""" + str(day) + """" position=\"""" + str((87 + (79 * day)) + 19) + """,178" size="100,100" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/icon/""" + str(dagenbefore["iconcode"]) + """.png" zPosition="1" alphatest="on"/>
                 <widget name="wind""" + str(day) + """" position=\"""" + str((87 + (79 * day))+27) + """,250" size="100,100" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/linessd/wind/""" + str(dagenbefore["winddirection"]) + """.png" zPosition="2" transparent="0" alphatest="blend"/>
                 <widget name="city1" position="87,30" size="534,40" zPosition="3" valign="center" halign="left" font="Regular;34" borderColor="black" borderWidth="1" transparent="1"/>
-                <widget name="dagvandeweek""" + str(day) + """" position=\"""" + str((90 + (79 * day))+0) + """,103" size="79,36" valign="center" halign="center" zPosition="15" font="Regular;30" transparent="1" borderColor="black" borderWidth="1"/>
-                <widget name="datumvandeweek""" + str(day) + """" position=\"""" + str((90 + (79 * day))+0) + """,130" size="79,36" valign="center" halign="center" zPosition="15" font="Regular;20" transparent="1" borderColor="black" borderWidth="1"/>
+                <widget name="dagvandeweek""" + str(day) + """" position=\"""" + str((90 + (79 * day)) + 0) + """,103" size="79,36" valign="center" halign="center" zPosition="15" font="Regular;30" transparent="1" borderColor="black" borderWidth="1"/>
+                <widget name="datumvandeweek""" + str(day) + """" position=\"""" + str((90 + (79 * day)) + 0) + """,130" size="79,36" valign="center" halign="center" zPosition="15" font="Regular;20" transparent="1" borderColor="black" borderWidth="1"/>
                 <widget name="regenval""" + str(day) + """" position=\"""" + str((90 + (79 * day))+0) + """,400" size="79,36" valign="center" halign="center" zPosition="20" font="Regular;17" transparent="1" borderColor="black" borderWidth="1"/>
-                <widget name="regenvalunit""" + str(day) + """" position=\"""" + str((90 + (79 * day))+0) + """,400" size="79,36" valign="center" halign="center" zPosition="20" font="Regular;20" transparent="1" borderColor="black" borderWidth="1"/>
-                <widget name="windspeed""" + str(day) + """" position=\"""" + str((90 + (79 * day))+0) + """,290" size="79,36" valign="center" halign="center" zPosition="20" font="Regular;20" transparent="1" borderColor="black" borderWidth="1"/>
-                <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/linessd/rain.png" position=\"""" + str((80 + (79 * day))+30) + ""","""+str((400)-rainamount)+"""\" size="40,"""+str(rainamount)+"""\" zPosition="12" transparent="0" alphatest="blend"/>
-                <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/linessd/rainstond.png" position=\"""" + str((74 + (79 * day))+30) + ""","""+str((400))+"""\" size="54,7" zPosition="15" transparent="0" alphatest="blend"/>"""
-                dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/linessd/rdot.png" position=\"""" + str(((87 + (79 * day))+40)-8) + ""","""+str((((yposline)+lineheight)-7))+"""\" size="134,134" zPosition="10" transparent="0" alphatest="blend"/>"""
-                self["linetempmax"+str(day)] = Label(str(curtemp))
-                self["regenval"+str(day)] = Label(str(dagenbefore["precipitationmm"])+" mm")
-                self["windspeed"+str(day)] = Label(str(dagenbefore["windspeed"])+" km/h")
-                self["regenvalunit"+str(day)] = Label(str(""))
+                <widget name="regenvalunit""" + str(day) + """" position=\"""" + str((90 + (79 * day)) + 0) + """,400" size="79,36" valign="center" halign="center" zPosition="20" font="Regular;20" transparent="1" borderColor="black" borderWidth="1"/>
+                <widget name="windspeed""" + str(day) + """" position=\"""" + str((90 + (79 * day)) + 0) + """,290" size="79,36" valign="center" halign="center" zPosition="20" font="Regular;20" transparent="1" borderColor="black" borderWidth="1"/>
+                <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/linessd/rain.png" position=\"""" + str((80 + (79 * day)) + 30) + """,""" + str((400) - rainamount) + """\" size="40,""" + str(rainamount) + """\" zPosition="12" transparent="0" alphatest="blend"/>
+                <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/linessd/rainstond.png" position=\"""" + str((74 + (79 * day)) + 30) + """,""" + str((400)) + """\" size="54,7" zPosition="15" transparent="0" alphatest="blend"/>"""
+                dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/linessd/rdot.png" position=\"""" + str(((87 + (79 * day)) + 40) - 8) + """,""" + str((((yposline)+lineheight) - 7)) + """\" size="134,134" zPosition="10" transparent="0" alphatest="blend"/>"""
+                self["linetempmax" + str(day)] = Label(str(curtemp))
+                self["regenval" + str(day)] = Label(str(dagenbefore["precipitationmm"]) + " mm")
+                self["windspeed" + str(day)] = Label(str(dagenbefore["windspeed"]) + " km/h")
+                self["regenvalunit" + str(day)] = Label(str(""))
                 curtemp = int(round(dagenbefore["mintemperature"]))
                 lineheight = 0
                 if day < len(dataDagen)-1:
-                    tempdiff = int(round(dataDagen[day+1]["mintemperature"])-curtemp)
+                    tempdiff = int(round(dataDagen[day + 1]["mintemperature"])-curtemp)
                     if tempdiff > 0:
                         lineheight = tempdiff*12
                 yposline = (800-(curtemp*12))-lineheight
                 yposline = yposline+maxheightshift
                 if day < len(dataDagen)-1:
-                    dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/linessd/b""" + str(tempdiff) + """.png" position=\"""" + str((87 + (79 * day))+40) + ""","""+str(yposline)+"""\" size="134,134" zPosition="10" transparent="0" alphatest="blend"/>"""
-                dayinfoblok += """<widget name="linetempmin""" + str(day) + """" position=\"""" + str(((87 + (79 * day))-12)+40) + ""","""+str((yposline+10)+lineheight)+"""\" size="60,36" zPosition="15" font="Regular;20" transparent="1" borderColor="black" borderWidth="1"/>"""
-                dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/linessd/bdot.png" position=\"""" + str(((87 + (79 * day))+40)-8) + ""","""+str(((yposline)+lineheight)-7)+"""\" size="134,134" zPosition="10" transparent="0" alphatest="blend"/>"""
-                self["linetempmin"+str(day)] = Label(str(curtemp))
-                self["bigWeerIcon1"+str(day)] = Pixmap()
-                self["wind"+str(day)] = Pixmap()
+                    dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/linessd/b""" + str(tempdiff) + """.png" position=\"""" + str((87 + (79 * day)) + 40) + """,""" + str(yposline) + """\" size="134,134" zPosition="10" transparent="0" alphatest="blend"/>"""
+                dayinfoblok += """<widget name="linetempmin""" + str(day) + """" position=\"""" + str(((87 + (79 * day))-12)+40) + """,""" + str((yposline + 10) + lineheight) + """\" size="60,36" zPosition="15" font="Regular;20" transparent="1" borderColor="black" borderWidth="1"/>"""
+                dayinfoblok += """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/linessd/bdot.png" position=\"""" + str(((87 + (79 * day)) + 40) - 8) + """,""" + str(((yposline) + lineheight) - 7) + """\" size="134,134" zPosition="10" transparent="0" alphatest="blend"/>"""
+                self["linetempmin" + str(day)] = Label(str(curtemp))
+                self["bigWeerIcon1" + str(day)] = Pixmap()
+                self["wind" + str(day)] = Pixmap()
 
                 mydate = dagenbefore["date"][:-9]
                 unixtimecode = time.mktime(datetime.datetime(int(mydate[:4]), int(mydate[5:][:2]), int(mydate[8:][:2])).timetuple())
                 unixtimecode = unixtimecode
                 info1 = str(strftime("%A", localtime(unixtimecode))).title()[:2]
                 info2 = str(strftime("%d-%m", localtime(unixtimecode)))
-                self["dagvandeweek"+str(day)] = Label(str(info1).upper())
-                self["datumvandeweek"+str(day)] = Label(str(info2))
+                self["dagvandeweek" + str(day)] = Label(str(info1).upper())
+                self["datumvandeweek" + str(day)] = Label(str(info2))
             self["city1"] = Label(str(citynamedisplay))
             skin = """
                 <screen position="fill" flags="wfNoBorder">
@@ -1207,27 +1204,27 @@ class weathertalk(Screen):
             self["weerchat"] = Label(transhtml(match[self.indexpage]))
         except:
             self["weerchat"] = Label("regx aanpassen")
-        self["PAG"] = Label("1/"+str(len(self.wchattext)))
+        self["PAG"] = Label("1/" + str(len(self.wchattext)))
 
         self["actions"] = ActionMap(["WizardActions"], {"left": self.left, "right": self.right, "back": self.close}, -1)
         self["ColorActions"] = HelpableActionMap(self, "ColorActions", {"red": self.exit}, -1)
         self["key_red"] = Label(_("Exit"))
 
     def left(self):
-        if self.indexpage<=0:
-            self.indexpage=0
+        if self.indexpage <= 0:
+            self.indexpage = 0
         else:
-            self.indexpage=self.indexpage-1
+            self.indexpage = self.indexpage - 1
         self["weerchat"].setText(transhtml(self.wchattext[self.indexpage]))
-        self["PAG"].setText(str(self.indexpage+1)+"/"+str(len(self.wchattext)))
+        self["PAG"].setText(str(self.indexpage + 1) + "/" + str(len(self.wchattext)))
 
     def right(self):
-        if self.indexpage>=len(self.wchattext)-1:
-            self.indexpage=len(self.wchattext)-1
+        if self.indexpage >= len(self.wchattext) - 1:
+            self.indexpage = len(self.wchattext) - 1
         else:
-            self.indexpage=self.indexpage+1
+            self.indexpage = self.indexpage+1
         self["weerchat"].setText(transhtml(self.wchattext[self.indexpage]))
-        self["PAG"].setText(str(self.indexpage+1)+"/"+str(len(self.wchattext)))
+        self["PAG"].setText(str(self.indexpage + 1) + "/" + str(len(self.wchattext)))
 
     def exit(self):
         self.close(weathertalk)
@@ -1277,13 +1274,13 @@ class radarScreenoatv(Screen):
     def updatePic(self):
         global pos
         if sz_w > 1800:
-            self['picd'].moveTo((pos * -550)+685, 284, 1)
+            self['picd'].moveTo((pos * -550) + 685, 284, 1)
         else:
             global picadjust
-            postt = (pos * -550)+365
-            if postt<-8000:
-                pos=0
-            self['picd'].moveTo((pos * -550)+365, 86, 1)
+            postt = (pos * -550) + 365
+            if postt < -8000:
+                pos = 0
+            self['picd'].moveTo((pos * -550) + 365, 86, 1)
         pos += 1
         try:
             if pos >= get_image_info('/tmp/HetWeer/00.png')[0] / 550:
@@ -1312,13 +1309,13 @@ class radarScreenop(Screen):
         global legend
         legendinfo = ""
         if sz_w > 1800:
-            self.scaler= 2.0
+            self.scaler = 2.0
         if sz_w > 1800:
             if legend:
                 legendinfo = """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lo/legendehd.png" zPosition="6" position="460,630" size="270,333" alphatest="on"/>"""
             skin = """
-            <screen position="fill" size=\""""+str(int(550*self.scaler-16))+""","""+str(int(512*self.scaler))+"""">
-            <widget name="picd" position="400,28" size=\""""+str(int(picformat[0]*self.scaler))+""","""+str(int(picformat[1]*self.scaler))+"""" zPosition="5" alphatest="on"/>"""+legendinfo+"""
+            <screen position="fill" size=\"""" + str(int(550 * self.scaler-16)) + """,""" + str(int(512 * self.scaler)) + """">
+            <widget name="picd" position="400,28" size=\"""" + str(int(picformat[0] * self.scaler)) + """,""" + str(int(picformat[1] * self.scaler)) + """" zPosition="5" alphatest="on"/>""" + legendinfo + """
             <widget name="radarname" position="center,50" size="600,72" zPosition="6" halign="center" transparent="1" font="Regular;60" borderColor="black" borderWidth="2"/>
             <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/borders/framehdop.png" zPosition="6" position="center,center" size="1920,1080" alphatest="on"/>
             </screen>"""
@@ -1327,8 +1324,8 @@ class radarScreenop(Screen):
             if legend:
                 legendinfo = """<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/lo/legende.png" zPosition="6" position="326,390" size="180,222" alphatest="on"/>"""
             skin = """
-            <screen position="fill" size=\""""+str(int(370*self.scaler-16))+""","""+str(int(512*self.scaler))+"""">
-            <widget name="picd" position="305,36" size=\""""+str(int(picformat[0]*self.scaler))+""","""+str(int(picformat[1]*self.scaler))+"""" zPosition="5" alphatest="on"/>"""+legendinfo+"""
+            <screen position="fill" size=\"""" + str(int(370 * self.scaler - 16)) + """,""" + str(int(512 * self.scaler)) + """">
+            <widget name="picd" position="305,36" size=\"""" + str(int(picformat[0] * self.scaler)) + """,""" + str(int(picformat[1] * self.scaler)) + """" zPosition="5" alphatest="on"/>""" + legendinfo + """
             <widget name="radarname" position="center,56" size="400,52" zPosition="6" halign="center" transparent="1" font="Regular;40" borderColor="black" borderWidth="2"/>
             <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/HetWeer/Images/borders/framesdop.png" zPosition="6" position="center,center" size="1280,650" alphatest="on"/>
             </screen>"""
@@ -1371,14 +1368,14 @@ class radarScreenop(Screen):
     def updatePic(self):
         global pos
         if sz_w > 1800:
-            self["picd"].moveTo((pos*(-550*self.scaler)-15+415),28,1)
+            self["picd"].moveTo((pos * (-550 * self.scaler) -15 + 415), 28, 1)
 
         else:
             global picadjust
-            postt=(pos * -687.5)
-            if postt<-8000:
-                pos=0
-            self['picd'].moveTo((pos *(-550*self.scaler))+300, 36, 1)
+            postt = (pos * -687.5)
+            if postt < -8000:
+                pos = 0
+            self['picd'].moveTo((pos * (-550 * self.scaler))+300, 36, 1)
         pos += 1
         try:
             if pos >= get_image_info('/tmp/HetWeer/00.png')[0] / (550):
